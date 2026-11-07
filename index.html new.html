@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pending Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f1f4f9;--card:#fff;--tx:#17202e;--mu:#667386;--bd:#e1e6ee;--ac:#1d4ed8;--ac2:#0f2d6b;--ok:#15935f;--pe:#e08a00;--sh:0 1px 3px rgba(16,30,54,.08)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1117;--card:#161c26;--tx:#e8edf5;--mu:#8f9db0;--bd:#263040;--ac:#4f8df5;--ac2:#13264d;--ok:#3fc58a;--pe:#f0a93a;--sh:none}}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:14px}
+.top{background:linear-gradient(120deg,var(--ac2),var(--ac));color:#fff;padding:16px 14px 44px}
+.top h1{margin:0;font-size:19px;letter-spacing:.2px}.top p{margin:3px 0 0;font-size:12px;opacity:.8}
+.wrap{padding:0 12px 20px;margin-top:-30px;max-width:1200px;margin-left:auto;margin-right:auto}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:12px;box-shadow:var(--sh)}
+.card h3{margin:0 0 6px;font-size:13px;color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+@media(min-width:760px){.kpis{grid-template-columns:repeat(5,1fr)}}
+.k{background:var(--card);border:1px solid var(--bd);border-left:4px solid var(--ac);border-radius:12px;padding:10px 12px;box-shadow:var(--sh)}
+.k small{color:var(--mu);display:block;font-size:11px;text-transform:uppercase;letter-spacing:.3px}.k b{font-size:21px;display:block;margin-top:2px}
+.k.g{border-left-color:var(--ok)}.k.o{border-left-color:var(--pe)}
+.ubar{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px}
+.u{flex:0 0 138px;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:9px 11px;cursor:pointer;box-shadow:var(--sh)}
+.u.on{border-color:var(--ac);outline:2px solid var(--ac)}
+.u small{color:var(--mu);font-size:11px}.u b{display:block;font-size:15px;margin:2px 0 6px}
+.pb{height:6px;background:var(--bd);border-radius:4px;overflow:hidden}.pb i{display:block;height:100%;background:var(--ok)}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--bd);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--card);color:var(--tx);padding:7px 14px;cursor:pointer;font-size:13px}
+.seg button.on{background:var(--ac);color:#fff}
+input,select{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:8px;font-size:14px;min-width:0}
+input:focus,select:focus{outline:2px solid var(--ac);border-color:transparent}
+.b{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:14px}
+.b.l{background:var(--card);color:var(--ac);border:1px solid var(--ac)}
+.form{display:none;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}.form.show{display:grid}
+@media(min-width:760px){.form.show{grid-template-columns:2fr 1fr 1fr 1fr 1fr auto}}
+.charts{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:760px){.charts{grid-template-columns:repeat(4,1fr)}}
+.cw{position:relative;height:190px}
+.tw{overflow-x:auto;padding:0}
+table{border-collapse:collapse;width:100%;min-width:760px}
+th{background:var(--bg);color:var(--mu);padding:9px 8px;font-size:11px;text-align:left;text-transform:uppercase;letter-spacing:.4px;cursor:pointer;white-space:nowrap;border-bottom:1px solid var(--bd)}
+td{padding:7px 8px;border-bottom:1px solid var(--bd)}
+tr:hover td{background:var(--bg)}
+td input{width:72px;padding:5px}
+.st{padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600}
+.Completed{background:rgba(21,147,95,.14);color:var(--ok)}.Pending{background:rgba(224,138,0,.15);color:var(--pe)}
+.x{background:none;border:0;color:var(--mu);cursor:pointer;font-size:15px;padding:2px 6px}
+.x:hover{color:#d33}
+.pc{display:flex;align-items:center;gap:6px;min-width:90px}.pc .pb{flex:1}.pc span{font-size:11px;color:var(--mu);width:30px}
+#gate{position:fixed;inset:0;z-index:99;background:linear-gradient(120deg,var(--ac2),var(--ac));display:flex;align-items:center;justify-content:center;padding:20px}
+#gate .bx{background:var(--card);border-radius:14px;padding:24px;width:100%;max-width:340px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+#gate h2{margin:0 0 4px;font-size:18px}#gate p{margin:0 0 14px;color:var(--mu);font-size:12px}
+#gate input{width:100%;margin-bottom:10px}#gate .er{color:#d33;font-size:12px;min-height:16px;margin-bottom:6px}
+.locked .wrap,.locked .top{display:none}
+.tb2{float:right;display:flex;gap:6px}.tb2 button{background:rgba(255,255,255,.18);border:0;color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer}
+</style></head><body class="locked">
+<div id="gate"><div class="bx"><h2>Pending Tracker</h2><p>Password dalein</p><input id="pw" type="password" placeholder="Password" autocomplete="off"><div class="er" id="er"></div><button class="b" id="go" style="width:100%">Unlock</button></div></div>
+<div class="top"><div class="tb2"><button id="cp">Password badlein</button><button id="lo">Logout</button></div><h1>Pending Tracker</h1><p>Items, qty, rate aur pending status ek jagah</p></div>
+<div class="wrap">
+<div class="kpis" id="kpis"></div>
+<div class="ubar" id="ukp"></div>
+<div class="card">
+ <div class="row">
+  <div class="seg" id="stSl"></div>
+  <input id="q" placeholder="Search item..." style="flex:1;min-width:140px">
+  <button class="b l" id="clr">Reset</button>
+  <button class="b" id="tg">+ Naya Item</button>
+ </div>
+ <div class="form" id="fm">
+  <input id="n" placeholder="Item name">
+  <select id="u"></select>
+  <input id="qt" type="number" min="0" placeholder="Qty">
+  <input id="rt" type="number" min="0" placeholder="Rate">
+  <input id="rc" type="number" min="0" placeholder="Received">
+  <button class="b" id="add">Save</button>
+ </div>
+</div>
+<div class="charts">
+ <div class="card"><h3>Status</h3><div class="cw"><canvas id="c1"></canvas></div></div>
+ <div class="card"><h3>Amount by UOM</h3><div class="cw"><canvas id="c2"></canvas></div></div>
+ <div class="card"><h3>Pending qty by UOM</h3><div class="cw"><canvas id="c4"></canvas></div></div>
+ <div class="card"><h3>Top pending items</h3><div class="cw"><canvas id="c3"></canvas></div></div>
+</div>
+<div class="card tw"><table><thead><tr><th data-k="n">S.No</th><th data-k="n">Item</th><th data-k="u">UOM</th><th data-k="q">Qty</th><th data-k="r">Rate</th><th data-k="a">Amount</th><th data-k="c">Received</th><th data-k="p">Progress</th><th data-k="p">Pending</th><th data-k="s">Status</th><th></th></tr></thead><tbody id="tb"></tbody></table></div>
+</div>
+<script>
+const UOMS=["Pcs","Nos","Kg","Gram","Ltr","ML","Meter","Feet","Ft","Sqft","Rft","Box","Carton","Packet","Dozen","Set","Pair","Bag","Bottle","Roll","Sheet","Ton"];
+let items=[],fs="All",fu="All",fq="",sk="",sd=1;
+try{items=JSON.parse(localStorage.getItem("pt_items")||"[]")}catch(e){}
+if(!items.length)items=[{n:"Sample Item",u:"Pcs",q:100,r:25.5,c:40},{n:"Rice",u:"Kg",q:50,r:180,c:50},{n:"Oil",u:"Ltr",q:30,r:320,c:10},{n:"Tiles",u:"Sqft",q:500,r:95,c:120}];
+const save=()=>{try{localStorage.setItem("pt_items",JSON.stringify(items))}catch(e){}};
+const $=id=>document.getElementById(id);
+const pend=i=>Math.max(0,i.q-i.c),amt=i=>i.q*i.r,stat=i=>pend(i)<=0?"Completed":"Pending";
+const fmt=n=>n.toLocaleString("en-IN",{maximumFractionDigits:2});
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+$("u").innerHTML=UOMS.map(u=>`<option>${u}</option>`).join("");
+const ch={},cols=["#1d4ed8","#15935f","#e08a00","#8e44ad","#c0392b","#16a085","#64748b"];
+function mk(id,type,opt){ch[id]=new Chart($(id),{type,data:{labels:[],datasets:[{data:[],borderRadius:4,backgroundColor:type==="doughnut"?["#15935f","#e08a00"]:cols}]},options:Object.assign({responsive:true,maintainAspectRatio:false,plugins:{legend:{display:type==="doughnut",position:"bottom"}}},opt||{})})}
+mk("c1","doughnut",{cutout:"62%"});mk("c2","bar");mk("c4","bar");mk("c3","bar",{indexAxis:"y"});
+function upd(id,l,d){const c=ch[id];c.data.labels=l;c.data.datasets[0].data=d;c.update()}
+const val={n:x=>x.n.toLowerCase(),u:x=>x.u,q:x=>x.q,r:x=>x.r,a:amt,c:x=>x.c,p:pend,s:stat};
+function render(){
+ let f=items.map((x,i)=>({x,i})).filter(({x})=>(fs==="All"||stat(x)===fs)&&(fu==="All"||x.u===fu)&&x.n.toLowerCase().includes(fq));
+ if(sk)f.sort((a,b)=>{const A=val[sk](a.x),B=val[sk](b.x);return(A>B?1:A<B?-1:0)*sd});
+ const L=f.map(o=>o.x),tot=L.reduce((s,x)=>s+amt(x),0),pc=L.filter(x=>stat(x)==="Pending").length;
+ const tq=L.reduce((s,x)=>s+x.q,0),rq=L.reduce((s,x)=>s+Math.min(x.c,x.q),0),pct=tq?Math.round(rq/tq*100):0;
+ const pv=L.reduce((s,x)=>s+pend(x)*x.r,0);
+ $("kpis").innerHTML=[["Total Items",L.length,""],["Total Amount",fmt(tot),""],["Pending Items",pc,"o"],["Pending Value",fmt(pv),"o"],["Received",pct+"%","g"]].map(k=>`<div class="k ${k[2]}"><small>${k[0]}</small><b>${k[1]}</b></div>`).join("");
+ const all={};items.forEach(x=>{const o=all[x.u]||(all[x.u]={q:0,c:0,p:0});o.q+=x.q;o.c+=Math.min(x.c,x.q);o.p+=pend(x)});
+ $("ukp").innerHTML=Object.entries(all).map(([u,o])=>`<div class="u ${fu===u?"on":""}" data-u="${u}"><small>${u}</small><b>${fmt(o.p)} pending</b><div class="pb"><i style="width:${o.q?Math.round(o.c/o.q*100):0}%"></i></div><small>of ${fmt(o.q)} ${u}</small></div>`).join("");
+ $("stSl").innerHTML=["All","Pending","Completed"].map(s=>`<button class="${fs===s?"on":""}" data-s="${s}">${s}</button>`).join("");
+ upd("c1",["Completed","Pending"],[L.length-pc,pc]);
+ const ba={},bp={};L.forEach(x=>{ba[x.u]=(ba[x.u]||0)+amt(x);bp[x.u]=(bp[x.u]||0)+pend(x)});
+ upd("c2",Object.keys(ba),Object.values(ba));upd("c4",Object.keys(bp),Object.values(bp));
+ const tp=L.filter(x=>pend(x)>0).sort((a,b)=>pend(b)-pend(a)).slice(0,5);
+ upd("c3",tp.map(x=>x.n),tp.map(pend));
+ $("tb").innerHTML=f.map(({x,i},k)=>{const p=x.q?Math.min(100,Math.round(x.c/x.q*100)):0;return`<tr><td>${k+1}</td><td><b>${esc(x.n)}</b></td><td>${x.u}</td><td>${fmt(x.q)}</td><td>${fmt(x.r)}</td><td>${fmt(amt(x))}</td><td><input type="number" min="0" value="${x.c}" data-i="${i}"></td><td><div class="pc"><div class="pb"><i style="width:${p}%"></i></div><span>${p}%</span></div></td><td>${fmt(pend(x))}</td><td><span class="st ${stat(x)}">${stat(x)}</span></td><td style="white-space:nowrap"><button class="x" title="Poora received" data-f="${i}">✓</button><button class="x" title="Delete" data-d="${i}">✕</button></td></tr>`}).join("")||'<tr><td colspan="11" style="text-align:center;color:var(--mu);padding:24px">Koi item nahi mila.</td></tr>';
+}
+document.addEventListener("click",e=>{const t=e.target.closest("[data-s],[data-u],[data-d],[data-f],[data-k]");if(!t)return;const d=t.dataset;
+ if(d.s){fs=d.s}else if(d.u){fu=fu===d.u?"All":d.u}
+ else if(d.d){if(!confirm("Ye item delete karein?"))return;items.splice(+d.d,1);save()}
+ else if(d.f){items[+d.f].c=items[+d.f].q;save()}
+ else if(d.k){sd=sk===d.k?-sd:1;sk=d.k}
+ render()});
+document.addEventListener("change",e=>{const t=e.target;if(t.dataset.i){items[+t.dataset.i].c=+t.value||0;save();render()}});
+$("q").oninput=e=>{fq=e.target.value.toLowerCase();render()};
+$("clr").onclick=()=>{fs="All";fu="All";fq="";sk="";$("q").value="";render()};
+$("tg").onclick=()=>$("fm").classList.toggle("show");
+$("add").onclick=()=>{const n=$("n").value.trim();if(!n){$("n").focus();return}
+ items.push({n,u:$("u").value,q:+$("qt").value||0,r:+$("rt").value||0,c:+$("rc").value||0});
+ ["n","qt","rt","rc"].forEach(i=>$(i).value="");save();render()};
+render();
+</script>
+<script>
+function H(s){let h1=0xdeadbeef,h2=0x41c6ce57;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return(4294967296*(2097151&h2)+(h1>>>0)).toString(36)}
+const DEF="1fkpjucdccw";
+const getH=()=>{try{return localStorage.getItem("pt_pw")||DEF}catch(e){return DEF}};
+function unlock(){document.body.classList.remove("locked");document.getElementById("gate").style.display="none";window.dispatchEvent(new Event("resize"))}
+function lock(){try{sessionStorage.removeItem("pt_ok")}catch(e){}document.body.classList.add("locked");const g=document.getElementById("gate");g.style.display="flex";document.getElementById("pw").value="";document.getElementById("pw").focus()}
+function tryGo(){const v=document.getElementById("pw").value;if(H(v)===getH()){try{sessionStorage.setItem("pt_ok","1")}catch(e){}unlock()}else{document.getElementById("er").textContent="Galat password";}}
+document.getElementById("go").onclick=tryGo;
+document.getElementById("pw").onkeydown=e=>{if(e.key==="Enter")tryGo()};
+document.getElementById("lo").onclick=lock;
+document.getElementById("cp").onclick=()=>{const o=prompt("Purana password:");if(o===null)return;if(H(o)!==getH()){alert("Purana password galat hai");return}const n=prompt("Naya password (kam az kam 4 harf):");if(!n||n.length<4){alert("Password change nahi hua");return}try{localStorage.setItem("pt_pw",H(n));alert("Password change ho gaya")}catch(e){alert("Save nahi hua")}};
+try{if(sessionStorage.getItem("pt_ok")==="1")unlock()}catch(e){}
+</script></body></html>
